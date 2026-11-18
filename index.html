@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observatório ARENAS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: faixa de aviso, cabeçalho com abas, conteúdo em cartões. Assinatura visual: intervalos de incerteza e hachura de supressão. */
+  --paper:#F2F4F1;--surface:#FFFFFF;--ink:#14212B;--muted:#56646F;--line:#D3D9D4;
+  --accent:#0E6B6A;--accent-soft:#DCEBEA;--on-accent:#FFFFFF;
+  --ok:#2F7D4F;--warn:#8A5A10;--warn-bg:#F6EBD3;--crit:#A93A2A;--crit-bg:#F7DFDA;--info-bg:#E6EEF2;
+  --f-d:'Source Serif 4',Georgia,serif;--f-b:'IBM Plex Sans',system-ui,sans-serif;--f-m:'IBM Plex Mono',ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E161C;--surface:#16212A;--ink:#E6ECEF;--muted:#93A1AC;--line:#2A3843;
+    --accent:#52BBB5;--accent-soft:#17383A;--on-accent:#0E161C;
+    --ok:#62BE8A;--warn:#E3B05A;--warn-bg:#3A2F17;--crit:#E8806D;--crit-bg:#3C201B;--info-bg:#1B2A33;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E161C;--surface:#16212A;--ink:#E6ECEF;--muted:#93A1AC;--line:#2A3843;
+  --accent:#52BBB5;--accent-soft:#17383A;--on-accent:#0E161C;
+  --ok:#62BE8A;--warn:#E3B05A;--warn-bg:#3A2F17;--crit:#E8806D;--crit-bg:#3C201B;--info-bg:#1B2A33;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:400 15px/1.55 var(--f-b);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--f-d);font-weight:600;line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:26px;letter-spacing:-.01em}
+h3{font-size:18px}
+p{margin:0}
+a{color:var(--accent)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+.proto{background:var(--warn-bg);color:var(--warn);font-size:13px;border-bottom:1px solid var(--line)}
+.proto .wrap{padding-top:8px;padding-bottom:8px}
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding-top:18px}
+.brand b{font:600 28px var(--f-d);letter-spacing:.01em}
+.brand span{color:var(--muted);font-size:14px}
+.modes{display:flex;gap:8px;margin:14px 0 0;flex-wrap:wrap}
+.mode{padding:8px 14px;border:1px solid var(--line);border-radius:6px 6px 0 0;border-bottom:none;text-decoration:none;color:var(--muted);background:var(--paper);font-weight:500;font-size:14px}
+.mode[aria-current="true"]{background:var(--paper);color:var(--ink);border-color:var(--ink);border-bottom:none;box-shadow:0 2px 0 var(--paper)}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;background:var(--paper);border-top:1px solid var(--line);padding:0 20px;max-width:none}
+.tabs .wrap{display:flex;gap:2px;flex-wrap:wrap;padding:0}
+.tab{padding:11px 14px;text-decoration:none;color:var(--muted);font-size:14px;font-weight:500;border-bottom:3px solid transparent}
+.tab:hover{color:var(--ink)}
+.tab[aria-current="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+main{padding:28px 0 56px}
+.stack{display:flex;flex-direction:column;gap:22px}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.grid.g3{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
+.card.flat{background:transparent}
+.lead{font-size:17px;max-width:68ch;color:var(--ink)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.kpi{display:flex;flex-direction:column;gap:2px}
+.kpi b{font:500 30px var(--f-m);letter-spacing:-.02em}
+.kpi span{color:var(--muted);font-size:13px}
+.note{border-left:3px solid var(--accent);background:var(--info-bg);padding:10px 14px;border-radius:0 6px 6px 0;font-size:14px}
+.note.warn{border-left-color:var(--warn);background:var(--warn-bg);color:var(--ink)}
+.note.crit{border-left-color:var(--crit);background:var(--crit-bg)}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid var(--line);white-space:nowrap}
+.pill.crit{background:var(--crit-bg);color:var(--crit);border-color:transparent}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.ok{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.mute{color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{padding:7px 12px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.field select,.field input,.field textarea{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-size:14px;min-width:180px}
+.btn{padding:9px 16px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:hover{filter:brightness(1.07)}
+/* ARENAS masthead */
+.lenses{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.lens{padding:14px 12px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-width:0}
+.lens:last-child{border-right:none}
+.lens .ch{font:600 44px/1 var(--f-d);color:var(--accent)}
+.lens.dim .ch{color:var(--muted);opacity:.55}
+.lens b{font-size:13px}
+.lens span{font-size:12px;color:var(--muted)}
+@media(max-width:820px){.lenses{grid-template-columns:repeat(3,1fr)}.lens:nth-child(3){border-right:none}.lens:nth-child(-n+3){border-bottom:1px solid var(--line)}}
+@media(max-width:480px){.lenses{grid-template-columns:repeat(2,1fr)}.lens{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line)}.lens:nth-child(even){border-right:none!important}}
+/* interval plot */
+.iv{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(96px,130px);gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.iv:first-of-type{border-top:none}
+.iv-l strong{display:block;font-weight:600;font-size:14px;line-height:1.25}
+.iv-l span{font-size:12px;color:var(--muted)}
+.iv-t{position:relative;height:30px;background:linear-gradient(90deg,var(--line) 0 1px,transparent 1px) 0 0/25% 100%,linear-gradient(var(--line),var(--line)) 100% 0/1px 100% no-repeat}
+.iv-t .whisk{position:absolute;top:50%;height:2px;background:var(--accent);transform:translateY(-1px)}
+.iv-t .whisk::before,.iv-t .whisk::after{content:"";position:absolute;top:-5px;width:2px;height:12px;background:var(--accent)}
+.iv-t .whisk::before{left:0}.iv-t .whisk::after{right:0}
+.iv-t .dot{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--surface);border:3px solid var(--accent)}
+.iv-t .dot.alert{border-color:var(--crit)}.iv-t .whisk.alert{background:var(--crit)}
+.iv-t .whisk.alert::before,.iv-t .whisk.alert::after{background:var(--crit)}
+.iv-t .thr{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--warn)}
+.iv-t .ref{position:absolute;top:8px;bottom:8px;width:3px;margin-left:-1.5px;background:var(--muted);opacity:.7}
+.iv-t.sup{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--line) 6px 7px);border:1px dashed var(--line);display:flex;align-items:center;padding-left:10px;font-size:12px;color:var(--muted)}
+.iv-v{font:500 14px var(--f-m);text-align:right;line-height:1.3}
+.iv-v small{display:block;color:var(--muted);font-size:11.5px;font-weight:400}
+.axis{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(96px,130px);gap:12px;font:400 11px var(--f-m);color:var(--muted)}
+.axis div{display:flex;justify-content:space-between}
+@media(max-width:560px){.iv,.axis{grid-template-columns:1fr}.iv-v{text-align:left}.axis>:first-child,.axis>:last-child{display:none}}
+/* cartogram */
+.carto{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:620px}
+.tile{aspect-ratio:1.15;border:1px solid var(--line);border-radius:8px;cursor:pointer;padding:9px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;background:var(--surface);position:relative}
+.tile .tn{font:500 12px var(--f-m)}
+.tile .tv{font:500 22px var(--f-m);letter-spacing:-.02em}
+.tile .ts{font-size:11px;line-height:1.2;opacity:.85}
+.tile.sup{background:repeating-linear-gradient(135deg,var(--surface) 0 6px,var(--line) 6px 7px);color:var(--muted)}
+.tile.none{background:transparent;border-style:dashed;color:var(--muted)}
+.tile[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.legend{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend .bar{width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 12%,var(--surface)),var(--accent))}
+.legend .hat{width:22px;height:10px;background:repeating-linear-gradient(135deg,var(--surface) 0 3px,var(--line) 3px 4px);border:1px solid var(--line)}
+/* tables */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-weight:600;text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td select,td input{padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);font-size:13px;max-width:100%}
+td select:disabled{opacity:.45}
+.list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.gate{max-width:560px;margin:10px auto}
+.gate .row{align-items:flex-end}
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:13px}
+/* mapa */
+:root{--d-gestao:#3F4B55;--d-justica:#3A5BA0;--d-saude:#B5473A;--d-educacao:#8A6A12;--d-assist:#6B4E9B;--lake:#D9E8EF;--land:#EAEEE9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--d-gestao:#A9B6C0;--d-justica:#86A4E6;--d-saude:#EE8F7F;--d-educacao:#E0BC5E;--d-assist:#B79BE3;--lake:#1B2A33;--land:#121C23}}
+:root[data-theme="dark"]{--d-gestao:#A9B6C0;--d-justica:#86A4E6;--d-saude:#EE8F7F;--d-educacao:#E0BC5E;--d-assist:#B79BE3;--lake:#1B2A33;--land:#121C23}
+.mapbox{background:var(--land);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.mapbox svg{display:block;width:100%;height:auto}
+.mapbox .lake{fill:var(--lake);stroke:none}
+.mapbox .eixo{fill:none;stroke:var(--muted);opacity:.55;stroke-linecap:round}
+.mapbox .ra{fill:var(--muted);font-family:var(--f-b);paint-order:stroke;stroke:var(--land);stroke-linejoin:round}
+.mapbox .site{cursor:pointer}
+.mapbox .site .shp{stroke:var(--surface)}
+.mapbox .site:hover .shp,.mapbox .site:focus-visible .shp{stroke:var(--ink)}
+.mapbox .site[aria-pressed="true"] .shp{stroke:var(--ink)}
+.mapbox .site:focus{outline:none}
+.mapbox .slab{fill:var(--ink);font-family:var(--f-b);font-weight:600;paint-order:stroke;stroke:var(--land);stroke-linejoin:round}
+.dk{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px}
+.dk.circle{border-radius:50%}.dk.hex{border-radius:3px}.dk.diamond{transform:rotate(45deg) scale(.85)}.dk.triangle{clip-path:polygon(50% 0,100% 100%,0 100%)}
+.card{container-type:inline-size}
+@container (max-width:520px){
+ .iv,.axis{grid-template-columns:1fr minmax(88px,120px);gap:4px 12px}
+ .iv-l{grid-column:1/-1}
+ .axis>:first-child{display:none}
+}
+.iv-v .wd{display:block;font:600 13px var(--f-b);text-align:right;line-height:1.25}
+.iv-v .wd.good{color:var(--ok)}.iv-v .wd.bad{color:var(--crit)}.iv-v .wd.mid{color:var(--warn)}
+.lvl{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding-bottom:6px}
+@media(prefers-reduced-motion:no-preference){.tile,.btn,.seg button{transition:filter .12s,outline-color .12s}}
+</style>
+</head>
+<body>
+<div class="proto"><div class="wrap"><strong>Protótipo exploratório.</strong> Todos os números, unidades e territórios são fictícios e gerados por simulação. Nenhum valor descreve serviço, edifício ou pessoa reais.</div></div>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>Observatório ARENAS</b><span>Condições de trabalho, acesso e experiência na prestação de serviços públicos</span></div>
+    <nav class="modes" id="modes" aria-label="Áreas"></nav>
+  </div>
+  <div class="tabs"><div class="wrap" id="tabs" role="navigation" aria-label="Seções"></div></div>
+</header>
+<main><div class="wrap" id="main"></div></main>
+<footer><div class="wrap">ARENAS de Implementação. Proposta de pós-doutorado 2027, FGV EPPG. Instrumento de triagem perceptual sem validação psicométrica estabelecida. Não substitui inspeção, laudo ou fiscalização.</div></footer>
+
+<script>
+(function(){
+'use strict';
+/* ===== Constantes de domínio ===== */
+var ICC=0.08, THR=0.60;
+var PUB={terr:{u:3,n:40},sec:{u:5,n:60}}, MGR_MIN_ACT=8, MIN_SIGNAL_N=10;
+var SECTORS=[{id:'justica',nome:'Justiça',p:'J'},{id:'saude',nome:'Saúde',p:'S'},{id:'educacao',nome:'Educação',p:'E'}];
+var TYPES={justica:['Central de atendimento','Secretaria de vara','Núcleo de conciliação'],saude:['Unidade básica','Policlínica','Pronto atendimento'],educacao:['Escola de ensino fundamental','Escola de ensino médio','Centro de educação infantil']};
+var DIMS=[
+ {id:'conforto',nome:'Conforto no uso',sub:'ruído, temperatura, iluminação, ar',lente:'Experiência',base:.9},
+ {id:'funcionalidade',nome:'Funcionalidade para a tarefa',sub:'espaço e mobiliário para a atividade',lente:'Rotinas',base:1.0},
+ {id:'organizacao',nome:'Organização espacial',sub:'circulação, proximidade, layout',lente:'Arranjo',base:.8},
+ {id:'privacidade',nome:'Privacidade e reserva',sub:'confidencialidade e controle de exposição',lente:'Experiência',base:.7},
+ {id:'acesso',nome:'Acesso e navegabilidade',sub:'chegada, orientação, deslocamento',lente:'Navegabilidade',base:.9}
+];
+var CONS=[
+ {id:'interrup',nome:'Interrupções frequentes durante a tarefa',base:.45},
+ {id:'adapt',nome:'Precisou adaptar o modo de trabalhar',base:.5},
+ {id:'dific',nome:'Dificuldade para executar a atividade',base:.35},
+ {id:'incid',nome:'Incidente declarado no período',base:.12}
+];
+var ACTS=[{id:'atendimento',nome:'Atendimento com reserva',w:.34},{id:'concentrado',nome:'Trabalho concentrado',w:.30},{id:'coletivas',nome:'Atividades coletivas',w:.24},{id:'orientacao',nome:'Orientação a usuários',w:.12}];
+var ESTADOS=['Sinalizado','Verificação agendada','Verificada','Intervenção planejada','Reavaliada'];
+var RESULTS=['Confirmada','Parcialmente confirmada','Não confirmada'];
+var BANDS={agora:'Verificar agora',ciclo:'Verificar no ciclo',monitorar:'Monitorar e ampliar coleta'};
+var TERR_OF=[1,1,1,2,2,3,4,5, 1,2,3,3,4,4,6,7, 1,3,4,5,5,8,9,10];
+var SHIFT={3:{acesso:-1.5},5:{acesso:-1.0},9:{privacidade:-1.3},12:{organizacao:-1.1},14:{conforto:-1.4},20:{funcionalidade:-1.2}};
+var SEC_EFF={justica:{conforto:.1,funcionalidade:.0,organizacao:-.1,privacidade:-.2,acesso:.1},saude:{conforto:-.1,funcionalidade:.1,organizacao:.1,privacidade:-.1,acesso:-.1},educacao:{conforto:-.2,funcionalidade:-.1,organizacao:.0,privacidade:.2,acesso:.0}};
+
+/* ===== Dados simulados (determinísticos) ===== */
+var seed=20261117;
+function rng(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+function norm(){var u=0;while(!u)u=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*rng());}
+function sg(x){return 1/(1+Math.exp(-x));}
+function pickAct(){var r=rng(),c=0;for(var i=0;i<ACTS.length;i++){c+=ACTS[i].w;if(r<c)return ACTS[i].id;}return ACTS[0].id;}
+
+var UNITS=[],R=[];
+SECTORS.forEach(function(s,si){
+  for(var k=0;k<8;k++){
+    var idx=si*8+k,n=10+Math.floor(rng()*20);
+    var u={idx:idx,id:s.p+'-'+('0'+(k+1)).slice(-2),sector:s.id,type:TYPES[s.id][k%3],terr:TERR_OF[idx],n:n,invited:Math.round(n/(0.5+rng()*0.25)),eff:{}};
+    DIMS.forEach(function(d){u.eff[d.id]=SEC_EFF[s.id][d.id]+norm()*0.45+((SHIFT[idx]||{})[d.id]||0);});
+    UNITS.push(u);
+  }
+});
+UNITS.forEach(function(u){
+  var meanP=0;DIMS.forEach(function(d){meanP+=sg(d.base+u.eff[d.id]);});meanP/=DIMS.length;
+  for(var i=0;i<u.n;i++){
+    var r={u:u.id,sector:u.sector,terr:u.terr,act:pickAct(),fav:{},cons:{}};
+    var person=norm()*0.3;
+    DIMS.forEach(function(d){r.fav[d.id]=rng()<sg(d.base+u.eff[d.id]+person)?1:0;});
+    CONS.forEach(function(c){var q=Math.max(.03,Math.min(.9,c.base+(0.72-meanP)*(c.id==='incid'?.5:.9)));r.cons[c.id]=rng()<q?1:0;});
+    R.push(r);
+  }
+});
+var UBY={};UNITS.forEach(function(u){UBY[u.id]=u;});
+
+function agg(rs,key,kind){
+  var n=rs.length,k=0,set={};
+  rs.forEach(function(r){k+=r[kind][key];set[r.u]=1;});
+  var units=Object.keys(set).length;
+  if(!n)return{n:0,k:0,units:0,p:NaN,lo:NaN,hi:NaN};
+  var m=n/units,deff=units<2?1:1+(m-1)*ICC,ne=n/deff,p=k/n,z=1.96;
+  var den=1+z*z/ne,c=p+z*z/(2*ne),h=z*Math.sqrt(p*(1-p)/ne+z*z/(4*ne*ne));
+  return{n:n,k:k,units:units,p:p,lo:Math.max(0,(c-h)/den),hi:Math.min(1,(c+h)/den)};
+}
+function sub(f){return R.filter(f);}
+function pubOK(a,rule){return a.units>=rule.u&&a.n>=rule.n;}
+
+/* Sinais por unidade */
+var SIGNALS=[];
+UNITS.forEach(function(u){
+  var rs=sub(function(r){return r.u===u.id;});
+  var dific=agg(rs,'dific','cons').p;
+  DIMS.forEach(function(d){
+    var a=agg(rs,d.id,'fav');
+    if(a.n<MIN_SIGNAL_N)return;
+    var tipo=null;
+    if(a.hi<THR)tipo='forte';else if(a.p<THR)tipo='fraco';
+    if(!tipo)return;
+    var band=d.id==='acesso'?'agora':(tipo==='forte'?(dific>=.5?'agora':'ciclo'):'monitorar');
+    SIGNALS.push({key:u.id+'|'+d.id,unit:u.id,dim:d.id,tipo:tipo,band:band,a:a});
+  });
+});
+var BORD={agora:0,ciclo:1,monitorar:2};
+SIGNALS.sort(function(x,y){return BORD[x.band]-BORD[y.band]||(x.unit<y.unit?-1:x.unit>y.unit?1:0);});
+
+/* ===== Estado ===== */
+var STORE='arenas-obs-proto-v1';
+var state={level:'tecnica',view:'visao',mapDom:'todas',mapZoom:'df',site:'stf',dim:'conforto',terr:1,act:'todas',authed:false,role:'unidade',sector:'justica',unit:'J-04',wf:{},iv:[],missed:[],msg:''};
+function seedWf(){
+  var s=SIGNALS;
+  if(s[0])state.wf[s[0].key]={estado:'Verificada',resultado:'Confirmada',nota:'Barreira confirmada em visita técnica simulada.'};
+  if(s[1])state.wf[s[1].key]={estado:'Verificação agendada',resultado:'',nota:''};
+  if(s[2])state.wf[s[2].key]={estado:'Intervenção planejada',resultado:'Parcialmente confirmada',nota:'Ajuste de fluxo de atendimento previsto.'};
+  if(s[2])state.iv.push({id:1,key:s[2].key,acao:'Reorganizar fila e sinalização do atendimento',resp:'Coordenação da unidade',prazo:'2027-03-31',estado:'Planejada'});
+}
+seedWf();
+try{var sv=JSON.parse(localStorage.getItem(STORE)||'null');if(sv){state.wf=sv.wf||state.wf;state.iv=sv.iv||state.iv;state.missed=sv.missed||state.missed;}}catch(e){}
+function save(){try{localStorage.setItem(STORE,JSON.stringify({wf:state.wf,iv:state.iv,missed:state.missed}));}catch(e){}}
+function wf(key){return state.wf[key]||(state.wf[key]={estado:'Sinalizado',resultado:'',nota:''});}
+
+/* ===== Utilidades de apresentação ===== */
+function $(s){return document.querySelector(s);}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function pc(x){return isNaN(x)?'sem dado':Math.round(x*100)+'%';}
+function dimOf(id){return DIMS.filter(function(d){return d.id===id;})[0];}
+function secOf(id){return SECTORS.filter(function(s){return s.id===id;})[0];}
+function ivRow(o){
+  var a=o.a,label='<div class="iv-l"><strong>'+esc(o.label)+'</strong>'+(o.sub?'<span>'+esc(o.sub)+'</span>':'')+'</div>';
+  if(o.sup){return '<div class="iv">'+label+'<div class="iv-t sup" role="img" aria-label="Valor suprimido">Suprimido: '+esc(o.sup)+'</div><div class="iv-v">sem divulgação</div></div>';}
+  var alert=o.thr&&a.hi<THR,cls=alert?' alert':'';
+  var ref=o.ref!=null?'<i class="ref" style="left:'+(o.ref*100)+'%" title="Referência do setor"></i>':'';
+  var thr=o.thr?'<i class="thr" style="left:'+(THR*100)+'%" title="Limiar provisório de atenção"></i>':'';
+  var cid=state.level==='cidadao',wd='',wc='mid';
+  if(o.cons){if(a.hi<.25){wd='Poucos relatam';wc='good';}else if(a.lo>=.4){wd='Muitos relatam';wc='bad';}else{wd='Parte relata';}}
+  else{if(a.lo>=THR){wd='Boa percepção';wc='good';}else if(a.hi<THR){wd='Percepção ruim';wc='bad';}else{wd='Resultado incerto';}}
+  var txt=pc(a.p)+', intervalo de '+Math.round(a.lo*100)+' a '+Math.round(a.hi*100)+', '+a.n+' respostas';
+  return '<div class="iv">'+label+'<div class="iv-t" role="img" aria-label="'+esc(o.label+': '+txt)+'">'+thr+ref+'<i class="whisk'+cls+'" style="left:'+a.lo*100+'%;width:'+(a.hi-a.lo)*100+'%"></i><i class="dot'+cls+'" style="left:'+a.p*100+'%"></i></div>'+(cid?'<div class="iv-v"><span class="wd '+wc+'">'+wd+'</span><small>'+a.n+' respostas</small></div></div>':'<div class="iv-v">'+pc(a.p)+'<small>'+Math.round(a.lo*100)+' a '+Math.round(a.hi*100)+' | n='+a.n+'</small></div></div>');
+}
+function axis(){return '<div class="axis" aria-hidden="true"><span></span><div><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div><span></span></div>';}
+function legendIv(extra){if(state.level==='cidadao')return '<p class="small muted" style="margin-top:8px">O ponto mostra o resultado mais provável. A linha mostra a faixa em que o resultado verdadeiro provavelmente está. Linhas longas indicam pouca certeza.</p>';return '<p class="small muted" style="margin-top:8px">Ponto: percentual de respostas favoráveis (4 ou 5 em 5). Linha: intervalo de 95%, ajustado por efeito de conglomerado (ICC fictícia 0,08).'+(extra||'')+'</p>';}
+function seg(items,cur,act){return '<div class="seg" role="group">'+items.map(function(i){return '<button type="button" data-act="'+act+'" data-v="'+i[0]+'" aria-pressed="'+(cur===i[0])+'">'+esc(i[1])+'</button>';}).join('')+'</div>';}
+
+/* ===== Navegação ===== */
+var PUBTABS=[['visao','Visão geral'],['atlas','Atlas territorial'],['mapa','Mapa de Brasília'],['indicadores','Indicadores'],['dificuldades','Dificuldades declaradas'],['evidencias','Evidências e limites']];
+var MGRTABS=[['gestor-resumo','Resumo da unidade'],['gestor-fila','Fila de verificação'],['gestor-intervencoes','Intervenções'],['gestor-regras','Regras de prioridade']];
+function nav(){
+  var mgr=state.view.indexOf('gestor')===0;
+  $('#modes').innerHTML='<a class="mode" href="#visao" aria-current="'+(!mgr)+'">Painel público</a><a class="mode" href="#gestor-resumo" aria-current="'+mgr+'">Área restrita do gestor</a>'+(mgr?'':'<div class="lvl"><span>Leitura</span>'+seg([['cidadao','Cidadão'],['tecnica','Técnica']],state.level,'level')+'</div>');
+  var tabs=mgr?MGRTABS:PUBTABS;
+  $('#tabs').innerHTML=tabs.map(function(t){return '<a class="tab" href="#'+t[0]+'" aria-current="'+(state.view===t[0])+'">'+t[1]+'</a>';}).join('');
+}
+
+/* ===== Visões públicas ===== */
+function vVisao(){
+  var terrOK=0;for(var t=1;t<=12;t++){var rs=sub(function(r){return r.terr===t;});if(pubOK(agg(rs,'conforto','fav'),PUB.terr))terrOK++;}
+  var inv=UNITS.reduce(function(s,u){return s+u.invited;},0);
+  var lenses=[['A','Arranjo','Organização espacial',1],['R','Rotinas','Funcionalidade para a tarefa',1],['E','Experiência','Conforto e privacidade',1],['N','Navegabilidade','Acesso e orientação',1],['A','Aprendizagem','Orienta a interpretação',0],['S','Síntese','Nomenclatura a homologar',0]];
+  return '<div class="stack">'+
+  '<div class="stack"><h2>O que os profissionais dizem sobre as condições em que o serviço público acontece</h2><p class="lead">Este painel reúne percepções de quem trabalha em escolas, unidades de saúde e serviços de justiça sobre conforto, uso do espaço, privacidade e acesso. Ele aponta onde vale olhar com mais atenção. Ele não mede a qualidade do edifício.</p></div>'+
+  '<div class="lenses" aria-label="Lentes ARENAS">'+lenses.map(function(l){return '<div class="lens'+(l[3]?'':' dim')+'"><div class="ch">'+l[0]+'</div><b>'+l[1]+'</b><span>'+l[2]+'</span></div>';}).join('')+'</div>'+
+  '<p class="small muted">As quatro primeiras lentes têm indicador neste painel. Aprendizagem e Síntese orientam a leitura e não geram escore.</p>'+
+  '<div class="grid"><div class="card kpi"><b>'+UNITS.length+'</b><span>unidades de serviço participantes</span></div><div class="card kpi"><b>'+R.length+'</b><span>respostas de profissionais ('+Math.round(R.length/inv*100)+'% dos convidados)</span></div><div class="card kpi"><b>3</b><span>setores: Justiça, Saúde e Educação</span></div><div class="card kpi"><b>'+terrOK+' de 12</b><span>territórios com divulgação permitida</span></div></div>'+
+  '<div class="grid g3">'+
+   '<div class="card stack" style="gap:8px"><h3>Para gestores</h3><p>Identifique tarefas e dimensões em que profissionais relatam dificuldade. Na área restrita, acompanhe verificações técnicas, intervenções e reavaliações.</p><a class="small" href="#gestor-resumo">Abrir área restrita (simulação)</a></div>'+
+   '<div class="card stack" style="gap:8px"><h3>Para cidadãos</h3><p>Veja como as condições de acesso e de atendimento são percebidas por quem presta o serviço, por território e por setor, sempre com a incerteza à vista.</p><a class="small" href="#atlas">Explorar o atlas</a></div>'+
+   '<div class="card stack" style="gap:8px"><h3>Para pesquisadores</h3><p>Consulte o estágio de validação de cada interpretação do instrumento e as regras que impedem comparações sem base psicométrica.</p><a class="small" href="#evidencias">Ver evidências e limites</a></div>'+
+  '</div>'+
+  respInst()+
+  '<div class="card"><h3>O que este painel não faz</h3><ul class="list" style="margin-top:10px"><li>Não publica ranking de edifícios nem índice geral de qualidade.</li><li>Não substitui inspeção, laudo técnico ou fiscalização obrigatória.</li><li>Não mede produtividade, desempenho de política nem segurança técnica.</li><li>Não divulga valores quando há poucas unidades ou respostas.</li><li>Não compara setores enquanto a equivalência de medida não for demonstrada.</li></ul></div>'+
+  '</div>';
+}
+function respInst(){
+  var n=SIGNALS.length;
+  var ver=SIGNALS.filter(function(x){return ESTADOS.indexOf(wf(x.key).estado)>=2;}).length;
+  var tot=state.iv.length,conc=state.iv.filter(function(i){return i.estado==='Concluída'||i.estado==='Reavaliada';}).length;
+  var body=n<10?'<p class="muted">Indicador suprimido: menos de 10 sinais registrados na rodada.</p>':
+   '<div class="grid" style="margin-top:10px"><div class="kpi"><b>'+Math.round(ver/n*100)+'%</b><span>dos sinais com verificação técnica concluída ('+ver+' de '+n+')</span></div><div class="kpi"><b>'+tot+'</b><span>intervenções registradas</span></div><div class="kpi"><b>'+conc+'</b><span>intervenções concluídas ou reavaliadas</span></div></div>';
+  return '<div class="card"><h3>Resposta institucional</h3><p style="margin-top:6px">O que as instituições fizeram a partir dos sinais, sem identificar unidades. Este indicador mede ação, e não a opinião de quem respondeu.</p>'+body+'<p class="small muted" style="margin-top:10px">Valores simulados. Dependem do registro feito na área restrita.</p></div>';
+}
+function tileStyle(p){var x=Math.round(14+p*72);return 'background:color-mix(in srgb,var(--accent) '+x+'%,var(--surface));color:'+(x>52?'var(--on-accent)':'var(--ink)')+';border-color:transparent';}
+function vAtlas(){
+  var d=dimOf(state.dim),tiles='';
+  for(var t=1;t<=12;t++){
+    var rs=sub(function(r){return r.terr===t;}),a=agg(rs,d.id,'fav');
+    if(!a.n){tiles+='<button type="button" class="tile none" data-act="terr" data-v="'+t+'" aria-pressed="'+(state.terr===t)+'"><span class="tn">T'+t+'</span><span class="ts">sem cobertura</span></button>';}
+    else if(!pubOK(a,PUB.terr)){tiles+='<button type="button" class="tile sup" data-act="terr" data-v="'+t+'" aria-pressed="'+(state.terr===t)+'"><span class="tn">T'+t+'</span><span class="ts">suprimido<br>'+a.units+' unid., n='+a.n+'</span></button>';}
+    else{tiles+='<button type="button" class="tile" style="'+tileStyle(a.p)+'" data-act="terr" data-v="'+t+'" aria-pressed="'+(state.terr===t)+'"><span class="tn">T'+t+'</span><span class="tv">'+Math.round(a.p*100)+'%</span><span class="ts">'+a.units+' unid., n='+a.n+'</span></button>';}
+  }
+  var rs2=sub(function(r){return r.terr===state.terr;}),ut=UNITS.filter(function(u){return u.terr===state.terr;});
+  var det;
+  if(!rs2.length)det='<p>O território T'+state.terr+' não tem unidades participantes nesta rodada.</p>';
+  else{
+    var rows=DIMS.map(function(dm){var a=agg(rs2,dm.id,'fav');return pubOK(a,PUB.terr)?ivRow({label:dm.nome,sub:dm.lente,a:a}):ivRow({label:dm.nome,sub:dm.lente,sup:'menos de '+PUB.terr.u+' unidades ou '+PUB.terr.n+' respostas'});}).join('');
+    var okn=pubOK(agg(rs2,'conforto','fav'),PUB.terr);
+    det='<p class="small muted" style="margin-bottom:6px">'+ut.length+' unidade(s) e '+rs2.length+' respostas neste território.</p>'+rows+axis()+(okn?legendIv(''):'<p class="small muted" style="margin-top:8px">Os valores ficam ocultos para proteger quem respondeu e evitar leituras instáveis.</p>');
+  }
+  return '<div class="stack"><div class="stack" style="gap:8px"><h2>Atlas territorial</h2><p class="lead">Cada quadro representa um território fictício. A cor indica o percentual de respostas favoráveis na dimensão escolhida, somando os três setores. Quadros hachurados não atingem o mínimo de '+PUB.terr.u+' unidades e '+PUB.terr.n+' respostas.</p></div>'+
+  '<div class="card stack" style="gap:12px"><div class="field">Dimensão exibida</div>'+seg(DIMS.map(function(x){return[x.id,x.nome];}),state.dim,'dim')+'</div>'+
+  '<div class="row"><div class="stack" style="flex:1 1 380px;gap:12px"><div class="carto" role="group" aria-label="Cartograma de territórios">'+tiles+'</div><div class="legend"><span>menos favorável</span><span class="bar"></span><span>mais favorável</span><span class="hat"></span><span>suprimido</span></div><p class="small muted">Cartograma esquemático. A posição dos quadros não segue a geografia real.</p></div>'+
+  '<div class="card" style="flex:1 1 400px"><div class="sec-h"><h3>Território T'+state.terr+'</h3></div>'+det+'</div></div>'+
+  '<div class="note warn">Valores territoriais descrevem percepções de profissionais, não condições técnicas dos edifícios. Poucas unidades por território tornam a leitura sensível a casos isolados.</div></div>';
+}
+function vIndicadores(){
+  var actSel='<label class="field">Atividade de referência<select id="actsel" data-chg="act"><option value="todas">Todas as atividades</option>'+ACTS.map(function(a){return '<option value="'+a.id+'"'+(state.act===a.id?' selected':'')+'>'+a.nome+'</option>';}).join('')+'</select></label>';
+  var cards=SECTORS.map(function(s){
+    var base=sub(function(r){return r.sector===s.id&&(state.act==='todas'||r.act===state.act);});
+    var us=UNITS.filter(function(u){return u.sector===s.id;}),inv=us.reduce(function(x,u){return x+u.invited;},0),all=sub(function(r){return r.sector===s.id;});
+    var rows=DIMS.map(function(d){var a=agg(base,d.id,'fav');return pubOK(a,PUB.sec)?ivRow({label:d.nome,sub:d.lente,a:a}):ivRow({label:d.nome,sub:d.lente,sup:a.units+' unid., n='+a.n+' (mínimo '+PUB.sec.u+' e '+PUB.sec.n+')'});}).join('');
+    return '<div class="card"><div class="sec-h"><h3>'+s.nome+'</h3><span class="small muted">'+us.length+' unidades | '+Math.round(all.length/inv*100)+'% de resposta</span></div>'+rows+axis()+'</div>';
+  }).join('');
+  return '<div class="stack"><div class="stack" style="gap:8px"><h2>Indicadores por setor</h2><p class="lead">Cada setor aparece em um painel separado, com a mesma escala. Não há ordenação nem diferença testada entre setores.</p></div>'+
+  '<div class="card row" style="align-items:flex-end">'+actSel+'<p class="small muted" style="flex:1 1 280px">Filtre pela atividade que o profissional mais realiza no ambiente. Combinações com poucas respostas ficam suprimidas.</p></div>'+
+  '<div class="note crit"><strong>Comparação entre setores indisponível.</strong> Os itens só poderão ser comparados entre Justiça, Saúde e Educação depois que a invariância de medida for demonstrada (marco G4 do projeto).</div>'+
+  '<div class="grid g3">'+cards+'</div>'+legendIv('')+
+  '<div class="note">Na dimensão de acesso, a pergunta se refere ao trajeto e à orientação do profissional. Acesso do usuário e do público em geral será medido em módulo próprio.</div></div>';
+}
+function vDificuldades(){
+  var cards=SECTORS.map(function(s){
+    var base=sub(function(r){return r.sector===s.id;});
+    var rows=CONS.map(function(c){var a=agg(base,c.id,'cons');return ivRow({label:c.nome,a:a,cons:true});}).join('');
+    return '<div class="card"><div class="sec-h"><h3>'+s.nome+'</h3><span class="small muted">n='+base.length+'</span></div>'+rows+axis()+'</div>';
+  }).join('');
+  return '<div class="stack"><div class="stack" style="gap:8px"><h2>Dificuldades declaradas</h2><p class="lead">Percentual de profissionais que relatam, no período de referência, interrupções, adaptações, dificuldades de execução e incidentes ligados ao ambiente de trabalho.</p></div>'+
+  '<div class="grid g3">'+cards+'</div>'+
+  '<p class="small muted">Ponto: percentual que relata a ocorrência. Linha: intervalo de 95%. Valores altos indicam mais relatos de dificuldade.</p>'+
+  '<div class="card"><h3>Como interpretar</h3><ul class="list" style="margin-top:10px"><li>Relatos descrevem consequências percebidas. Eles não entram em nenhum escore de condições ambientais.</li><li>Uma taxa elevada de interrupções sugere investigar circulação, ruído ou layout. A causa só se confirma por verificação técnica.</li><li>Incidentes declarados não equivalem a ocorrências registradas oficialmente.</li></ul></div>'+
+  '<div class="card stack" style="gap:8px"><div class="sec-h"><h3>Voz do cidadão</h3><span class="pill warn">em desenho, sem dados</span></div><p>Módulo curto para quem usa o serviço, com a mesma lógica de referente e tarefa. Depende de coleta específica e de aprovação ética (Opção C do projeto).</p><ul class="list"><li>Na última vez que usei este serviço, consegui chegar e me orientar sem dificuldade.</li><li>Fui atendido(a) com a reserva necessária para o assunto que tratei.</li><li>O tempo e as condições da espera foram adequados.</li><li>Consegui usar o espaço com a acessibilidade de que preciso.</li></ul><p class="small muted">Itens ilustrativos, ainda sem pré-teste cognitivo. A divergência entre a percepção do profissional e a do cidadão será analisada como achado, sem virar nota.</p></div></div>';
+}
+function vEvidencias(){
+  var ev=[
+   ['Conteúdo','Pertinência e clareza dos itens','Painel de especialistas e pré-teste cognitivo','Fase 1','Prevista'],
+   ['Processos de resposta','Compreensão de ambiente, atividade e período','Entrevistas cognitivas','Fase 1','Prevista'],
+   ['Estrutura interna','Dimensões distinguíveis e precisão','Análise fatorial exploratória e confirmatória, ômega','Fase 4','Pendente'],
+   ['Invariância','Comparar setores e atividades','Invariância de configuração, cargas e limiares','Fase 4 (G4)','Pendente'],
+   ['Agregação','Tratar respostas como atributo da unidade','Modelos multiníveis e concordância','Fase 4','Pendente'],
+   ['Validade externa','Convergência com verificação técnica','Cotejo amostral e registros independentes','Fase 5','Pendente'],
+   ['Efeito de apresentação','Estabilidade à ordem das perguntas','Subestudo randomizado','Fase 6','Prevista']
+  ];
+  var perm=[['Triagem por tarefa, ambiente e unidade','Permitido em caráter exploratório'],['Seleção de unidades para verificação técnica','Permitido com revisão de especialista'],['Monitoramento da própria unidade ao longo do tempo','Permitido para gestores da unidade'],['Comparação de médias entre setores','Vedado até G4'],['Ranking de edifícios ou unidades','Vedado'],['Certificação ou avaliação de conformidade','Vedado'],['Uso de resposta individual em avaliação funcional','Vedado']];
+  return '<div class="stack"><div class="stack" style="gap:8px"><h2>Evidências e limites de uso</h2><p class="lead">O instrumento ainda não tem validação psicométrica estabelecida. Esta página mostra o que já se sabe, o que falta e o que o painel pode ou não afirmar.</p></div>'+
+  '<div class="card"><h3>Estado da validação por interpretação</h3><div class="tw" style="margin-top:8px"><table><thead><tr><th>Evidência</th><th>Pergunta</th><th>Método</th><th>Fase</th><th>Estado</th></tr></thead><tbody>'+ev.map(function(e){return '<tr><td><strong>'+e[0]+'</strong></td><td>'+e[1]+'</td><td>'+e[2]+'</td><td class="mono">'+e[3]+'</td><td><span class="pill '+(e[4]==='Pendente'?'warn':'mute')+'">'+e[4]+'</span></td></tr>';}).join('')+'</tbody></table></div></div>'+
+  '<div class="card"><h3>Usos permitidos e vedados</h3><div class="tw" style="margin-top:8px"><table><tbody>'+perm.map(function(p){return '<tr><td>'+p[0]+'</td><td><span class="pill '+(p[1].indexOf('Vedado')===0?'crit':'ok')+'">'+p[1]+'</span></td></tr>';}).join('')+'</tbody></table></div></div>'+
+  '<div class="grid"><div class="card stack" style="gap:8px"><h3>Regras de divulgação</h3><ul class="list"><li>Território: mínimo de '+PUB.terr.u+' unidades e '+PUB.terr.n+' respostas.</li><li>Setor ou atividade: mínimo de '+PUB.sec.u+' unidades e '+PUB.sec.n+' respostas.</li><li>Sem divulgação de cargo, turno ou subgrupos pequenos.</li><li>Identificadores de unidade em tabela separada e protegida.</li></ul></div>'+
+  '<div class="card stack" style="gap:8px"><h3>Como ler o intervalo</h3><p>O intervalo mostra a faixa plausível do percentual verdadeiro. Intervalos largos indicam pouca informação. Quando dois intervalos se sobrepõem, a diferença entre eles não é confiável.</p></div></div></div>';
+}
+
+/* ===== Mapa de Brasília ===== */
+var DOMS={
+ gestao:{nome:'Gestão e atendimento',forma:'diamond',cor:'--d-gestao',dims:'Organização espacial, acesso e navegabilidade. Atividades de trabalho concentrado e de atendimento ao público.'},
+ justica:{nome:'Justiça',forma:'square',cor:'--d-justica',dims:'Privacidade e reserva em audiências e atendimento. Acesso e acessibilidade. Organização espacial das secretarias.'},
+ saude:{nome:'Saúde',forma:'circle',cor:'--d-saude',dims:'Privacidade e reserva no atendimento. Organização espacial e fluxo. Conforto (ruído, temperatura). Acesso.'},
+ educacao:{nome:'Educação',forma:'triangle',cor:'--d-educacao',dims:'Funcionalidade para a tarefa em sala e laboratório. Conforto no uso. Atividades coletivas e de trabalho concentrado.'},
+ assistencia:{nome:'Assistência social',forma:'hex',cor:'--d-assist',dims:'Privacidade e reserva no acolhimento. Acesso e navegabilidade. Organização espacial da recepção.',cond:true}
+};
+/* [id, nome, tipo, domínio, lat, lon, região, políticas implementadas] */
+var TAREFAS={gestao:'Atendimento ao público e trabalho concentrado de análise.',justica:'Atendimento com reserva e audiências.',saude:'Acolhimento, triagem e consulta com reserva.',educacao:'Aula, laboratório e atividades coletivas.',assistencia:'Acolhimento individual e cadastro.'};
+var SITES=[
+ ['esplanada','Esplanada dos Ministérios','Sede de ministérios','gestao',-15.7985,-47.8700,'Plano Piloto','Formulação e coordenação de políticas federais.'],
+ ['buriti','Palácio do Buriti','Sede do governo distrital','gestao',-15.7895,-47.9040,'Plano Piloto','Coordenação das políticas do Distrito Federal.'],
+ ['nahora','Rede Na Hora, Rodoviária','Atendimento ao cidadão','gestao',-15.7940,-47.8826,'Plano Piloto','Serviços públicos integrados e emissão de documentos.'],
+ ['stf','Supremo Tribunal Federal','Tribunal superior','justica',-15.8019,-47.8613,'Plano Piloto','Jurisdição constitucional e política judiciária nacional.'],
+ ['tjdft','TJDFT, sede','Tribunal de justiça','justica',-15.7965,-47.8985,'Plano Piloto','Prestação jurisdicional no Distrito Federal.'],
+ ['f-tag','Fórum de Taguatinga','Fórum regional','justica',-15.8330,-48.0510,'Taguatinga','Atendimento jurisdicional e conciliação regionais.'],
+ ['f-cei','Fórum de Ceilândia','Fórum regional','justica',-15.8210,-48.1040,'Ceilândia','Atendimento jurisdicional e conciliação regionais.'],
+ ['f-gama','Fórum do Gama','Fórum regional','justica',-16.0200,-48.0590,'Gama','Atendimento jurisdicional e conciliação regionais.'],
+ ['f-sob','Fórum de Sobradinho','Fórum regional','justica',-15.6510,-47.7870,'Sobradinho','Atendimento jurisdicional e conciliação regionais.'],
+ ['f-pla','Fórum de Planaltina','Fórum regional','justica',-15.6170,-47.6540,'Planaltina','Atendimento jurisdicional e conciliação regionais.'],
+ ['hbdf','Hospital de Base do DF','Hospital de referência','saude',-15.7990,-47.8930,'Plano Piloto','Atenção hospitalar de alta complexidade e urgência.'],
+ ['hran','Hospital Regional da Asa Norte','Hospital regional','saude',-15.7650,-47.8830,'Plano Piloto','Atenção hospitalar e ambulatorial regional.'],
+ ['hub','Hospital Universitário de Brasília','Hospital universitário','saude',-15.7610,-47.8720,'Plano Piloto','Atenção à saúde articulada a ensino e pesquisa.'],
+ ['h-tag','Hospital Regional de Taguatinga','Hospital regional','saude',-15.8350,-48.0580,'Taguatinga','Atenção hospitalar e ambulatorial regional.'],
+ ['h-cei','Hospital Regional de Ceilândia','Hospital regional','saude',-15.8185,-48.1085,'Ceilândia','Atenção hospitalar e ambulatorial regional.'],
+ ['h-sob','Hospital Regional de Sobradinho','Hospital regional','saude',-15.6550,-47.7880,'Sobradinho','Atenção hospitalar e ambulatorial regional.'],
+ ['h-pla','Hospital Regional de Planaltina','Hospital regional','saude',-15.6210,-47.6500,'Planaltina','Atenção hospitalar e ambulatorial regional.'],
+ ['h-gama','Hospital Regional do Gama','Hospital regional','saude',-16.0135,-48.0640,'Gama','Atenção hospitalar e ambulatorial regional.'],
+ ['h-bz','Hospital Regional de Brazlândia','Hospital regional','saude',-15.6720,-48.2020,'Brazlândia','Atenção hospitalar e ambulatorial regional.'],
+ ['unb','UnB, campus Darcy Ribeiro','Universidade federal','educacao',-15.7690,-47.8670,'Plano Piloto','Ensino superior público, pesquisa e extensão.'],
+ ['unb-cei','UnB, campus Ceilândia','Universidade federal','educacao',-15.8340,-48.1010,'Ceilândia','Ensino superior público, com foco em saúde.'],
+ ['unb-gama','UnB, campus Gama','Universidade federal','educacao',-15.9890,-48.0450,'Gama','Ensino superior público, com foco em engenharias.'],
+ ['unb-pla','UnB, campus Planaltina','Universidade federal','educacao',-15.6030,-47.6600,'Planaltina','Ensino superior público, com foco em ciências naturais e do campo.'],
+ ['cre-pp','Regional de Ensino, Plano Piloto','Coordenação regional','educacao',-15.8120,-47.8950,'Plano Piloto','Gestão da rede pública de educação básica da região.'],
+ ['cre-tag','Regional de Ensino, Taguatinga','Coordenação regional','educacao',-15.8310,-48.0630,'Taguatinga','Gestão da rede pública de educação básica da região.'],
+ ['cre-sam','Regional de Ensino, Samambaia','Coordenação regional','educacao',-15.8760,-48.0830,'Samambaia','Gestão da rede pública de educação básica da região.'],
+ ['cras-cei','Rede CRAS e CREAS, Ceilândia','Referência regional','assistencia',-15.8100,-48.1150,'Ceilândia','Proteção social básica e especial, cadastro e encaminhamento.'],
+ ['cras-sam','Rede CRAS e CREAS, Samambaia','Referência regional','assistencia',-15.8900,-48.0950,'Samambaia','Proteção social básica e especial, cadastro e encaminhamento.'],
+ ['cras-rec','Rede CRAS e CREAS, Recanto das Emas','Referência regional','assistencia',-15.9100,-48.0650,'Recanto das Emas','Proteção social básica e especial, cadastro e encaminhamento.'],
+ ['cras-est','Rede CRAS e CREAS, Estrutural','Referência regional','assistencia',-15.7850,-47.9900,'Estrutural','Proteção social básica e especial, cadastro e encaminhamento.'],
+ ['cras-pla','Rede CRAS e CREAS, Planaltina','Referência regional','assistencia',-15.6100,-47.6700,'Planaltina','Proteção social básica e especial, cadastro e encaminhamento.']
+].map(function(s){return{id:s[0],nome:s[1],tipo:s[2],dom:s[3],lat:s[4],lon:s[5],ra:s[6],pol:s[7]};});
+var RAS=[['Plano Piloto',-15.7700,-47.9250],['Lago Norte',-15.7250,-47.8600],['Lago Sul',-15.8550,-47.8450],['Guará',-15.8300,-47.9750],['Taguatinga',-15.8500,-48.0350],['Ceilândia',-15.8000,-48.1250],['Samambaia',-15.8500,-48.1050],['Recanto das Emas',-15.9450,-48.0900],['Gama',-16.0450,-48.0500],['Santa Maria',-16.0300,-47.9700],['Sobradinho',-15.6800,-47.8100],['Planaltina',-15.6500,-47.6400],['Paranoá',-15.7750,-47.7700],['Brazlândia',-15.6950,-48.2000],['São Sebastião',-15.9100,-47.7700],['Núcleo Bandeirante',-15.8900,-47.9500]];
+var MAPW=780,MAPH=596,LON0=-48.28,LAT0=-15.58;
+function MX(lon){return(lon-LON0)/0.68*MAPW;}
+function MY(lat){return(LAT0-lat)/0.50*MAPH;}
+function shape(f,x,y,r){
+  if(f==='circle')return '<circle class="shp" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r.toFixed(1)+'"/>';
+  if(f==='square')return '<rect class="shp" x="'+(x-r).toFixed(1)+'" y="'+(y-r).toFixed(1)+'" width="'+(2*r).toFixed(1)+'" height="'+(2*r).toFixed(1)+'" rx="'+(r*.2).toFixed(1)+'"/>';
+  var pts=[];
+  if(f==='triangle')pts=[[x,y-r*1.15],[x+r*1.1,y+r*.85],[x-r*1.1,y+r*.85]];
+  else if(f==='diamond')pts=[[x,y-r*1.25],[x+r*1.25,y],[x,y+r*1.25],[x-r*1.25,y]];
+  else for(var i=0;i<6;i++){var a=Math.PI/3*i;pts.push([x+r*1.1*Math.cos(a),y+r*1.1*Math.sin(a)]);}
+  return '<polygon class="shp" points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'"/>';
+}
+function estratos(){
+  var ks=Object.keys(DOMS);
+  var rows=ks.map(function(k){var l=SITES.filter(function(x){return x.dom===k;});var pp=l.filter(function(x){return x.ra==='Plano Piloto';}).length;return '<tr><td>'+DOMS[k].nome+(DOMS[k].cond?' <span class="pill warn">condicionada</span>':'')+'</td><td class="mono">'+l.length+'</td><td class="mono">'+pp+'</td><td class="mono">'+(l.length-pp)+'</td></tr>';}).join('');
+  return '<div class="card stack" style="gap:10px"><h3>Estratos para seleção do piloto</h3><p>A amostra do piloto deve sair de sorteio dentro de estratos, e não de adesão por conveniência. Esta tabela mostra os locais de referência por área e por região. O quadro de sorteio real virá dos cadastros oficiais.</p><div class="tw"><table><thead><tr><th>Área</th><th>Locais de referência</th><th>Plano Piloto</th><th>Demais regiões</th></tr></thead><tbody>'+rows+'</tbody></table></div><p class="small muted">Regra para divulgação: setor com menos de '+PUB.sec.u+' unidades participantes não tem valores públicos. O sorteio deve prever reservas para atingir esse mínimo.</p></div>';
+}
+function vMapa(){
+  var plano=state.mapZoom==='plano';
+  var vb=plano?{x:MX(-47.93),y:MY(-15.725),w:MX(-47.80)-MX(-47.93),h:0}:{x:0,y:0,w:MAPW,h:MAPH};
+  if(plano){vb.h=MY(-15.865)-vb.y;}
+  var s=vb.w/MAPW;
+  var lake=[[-15.735,-47.905],[-15.728,-47.855],[-15.760,-47.815],[-15.800,-47.810],[-15.835,-47.828],[-15.855,-47.870],[-15.835,-47.900],[-15.805,-47.868],[-15.790,-47.890],[-15.770,-47.900]].map(function(p){return MX(p[1]).toFixed(1)+','+MY(p[0]).toFixed(1);}).join(' ');
+  function P(lat,lon){return MX(lon).toFixed(1)+' '+MY(lat).toFixed(1);}
+  var eix='<path class="eixo" stroke-width="'+3.2*s+'" d="M'+P(-15.7995,-47.9120)+' L'+P(-15.8000,-47.8615)+'"/>'+
+   '<path class="eixo" stroke-width="'+3.2*s+'" d="M'+P(-15.7380,-47.9020)+' Q'+P(-15.7800,-47.8780)+' '+P(-15.7940,-47.8826)+' Q'+P(-15.8200,-47.8900)+' '+P(-15.8480,-47.9300)+'"/>';
+  var ras=RAS.map(function(r){return '<text class="ra" x="'+MX(r[2]).toFixed(1)+'" y="'+MY(r[1]).toFixed(1)+'" font-size="'+11.5*s+'" stroke-width="'+3*s+'" text-anchor="middle">'+r[0]+'</text>';}).join('');
+  var vis=SITES.filter(function(x){return state.mapDom==='todas'||x.dom===state.mapDom;});
+  var mk=vis.map(function(x){
+    var d=DOMS[x.dom],cx=MX(x.lon),cy=MY(x.lat),sel=state.site===x.id,r=(sel?8.5:6.5)*s;
+    var lab=sel?'<text class="slab" x="'+(cx+r+4*s).toFixed(1)+'" y="'+(cy+4*s).toFixed(1)+'" font-size="'+12.5*s+'" stroke-width="'+3.5*s+'">'+esc(x.nome)+'</text>':'';
+    return '<g class="site" tabindex="0" role="button" aria-pressed="'+sel+'" aria-label="'+esc(x.nome+', '+d.nome)+'" data-act="site" data-v="'+x.id+'" style="fill:var('+d.cor+')"><title>'+esc(x.nome)+'</title>'+shape(d.forma,cx,cy,r)+'</g>'+lab;
+  }).join('');
+  /* rótulo do selecionado por último para ficar sobre os marcadores */
+  var svg='<svg viewBox="'+vb.x.toFixed(1)+' '+vb.y.toFixed(1)+' '+vb.w.toFixed(1)+' '+vb.h.toFixed(1)+'" role="group" aria-label="Mapa esquemático do Distrito Federal"><polygon class="lake" points="'+lake+'"/>'+eix+ras+mk+'</svg>';
+  var sel=SITES.filter(function(x){return x.id===state.site;})[0]||SITES[0],sd=DOMS[sel.dom];
+  var panel='<h3>'+esc(sel.nome)+'</h3><p class="muted small" style="margin:4px 0 10px">'+esc(sel.tipo)+' | '+esc(sel.ra)+'</p>'+
+   '<p style="margin-bottom:10px"><span class="pill" style="color:var('+sd.cor+');border-color:currentColor"><span class="dk '+sd.forma+'" style="background:currentColor"></span>'+sd.nome+'</span>'+(sd.cond?' <span class="pill warn">expansão condicionada</span>':'')+'</p>'+
+   '<p><strong>Políticas implementadas</strong><br>'+esc(sel.pol)+'</p>'+
+   '<p style="margin-top:10px"><strong>Tarefa crítica</strong><br>'+TAREFAS[sel.dom]+'</p>'+
+   '<p style="margin-top:10px"><strong>O que o ARENAS pode observar</strong><br>'+sd.dims+'</p>'+
+   '<p class="small muted" style="margin-top:10px">Situação no painel: sem unidade participante. Nenhum dado deste painel se refere a este local.</p>';
+  var chips=seg([['todas','Todas as áreas']].concat(Object.keys(DOMS).map(function(k){return[k,DOMS[k].nome];})),state.mapDom,'mdom');
+  var legend='<div class="legend">'+Object.keys(DOMS).map(function(k){var d=DOMS[k];return '<span><span class="dk '+d.forma+'" style="background:var('+d.cor+')"></span>'+d.nome+'</span>';}).join('')+'</div>';
+  var rows=vis.map(function(x){var d=DOMS[x.dom];return '<tr><td><button type="button" class="btn ghost" style="padding:3px 9px;font-weight:500" data-act="site" data-v="'+x.id+'">'+esc(x.nome)+'</button></td><td>'+esc(x.ra)+'</td><td><span class="dk '+d.forma+'" style="background:var('+d.cor+')"></span>'+d.nome+'</td><td>'+esc(x.pol)+'</td></tr>';}).join('');
+  return '<div class="stack"><div class="stack" style="gap:8px"><h2>Mapa de Brasília</h2><p class="lead">Locais de referência onde políticas públicas são executadas no Distrito Federal, por área de política. Eles indicam onde o ARENAS pode ser aplicado. Nenhum deles participa do piloto.</p></div>'+
+  '<div class="card stack" style="gap:12px"><div class="row" style="justify-content:space-between;align-items:center"><div class="stack" style="gap:8px">'+chips+'</div>'+seg([['df','Distrito Federal'],['plano','Ampliar Plano Piloto']],state.mapZoom,'mzoom')+'</div></div>'+
+  '<div class="row"><div class="stack" style="flex:2 1 520px;gap:10px"><div class="mapbox">'+svg+'</div>'+legend+'<p class="small muted">Mapa esquemático desenhado sem mapa-base. Posições e contorno do lago são aproximados. Confirme endereço e coordenadas nos cadastros oficiais (CNES, Secretaria de Educação, Secretaria de Desenvolvimento Social, TJDFT) antes de selecionar qualquer unidade.</p></div>'+
+  '<div class="card" style="flex:1 1 300px">'+panel+'</div></div>'+
+  '<div class="card"><h3>Locais listados ('+vis.length+')</h3><div class="tw" style="margin-top:8px"><table><thead><tr><th>Local</th><th>Região</th><th>Área</th><th>Políticas implementadas</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+  estratos()+
+  '<div class="note">As regiões de assistência social e os órgãos de gestão fazem parte da expansão condicionada do projeto. O piloto inicial considera Justiça, Saúde e Educação.</div></div>';
+}
+
+/* ===== Área do gestor ===== */
+function visibleUnits(){return UNITS.filter(function(u){return state.role==='unidade'?u.id===state.unit:u.sector===state.sector;}).sort(function(a,b){return a.id<b.id?-1:1;});}
+function gate(){
+  var us=UNITS.map(function(u){return '<option value="'+u.id+'"'+(state.unit===u.id?' selected':'')+'>'+u.id+' ('+secOf(u.sector).nome+')</option>';}).join('');
+  var ss=SECTORS.map(function(s){return '<option value="'+s.id+'"'+(state.sector===s.id?' selected':'')+'>'+s.nome+'</option>';}).join('');
+  return '<div class="card gate stack"><h2>Área restrita</h2><p>Acesso simulado para demonstrar o fluxo do gestor. Na versão real, o acesso usará autenticação institucional, perfis por unidade e registro de consulta, conforme a LGPD.</p>'+
+  '<label class="field">Perfil<select id="rolesel" data-chg="role"><option value="unidade"'+(state.role==='unidade'?' selected':'')+'>Gestor de unidade</option><option value="setor"'+(state.role==='setor'?' selected':'')+'>Coordenação setorial</option></select></label>'+
+  (state.role==='unidade'?'<label class="field">Unidade<select id="unitsel" data-chg="unit">'+us+'</select></label>':'<label class="field">Setor<select id="secsel" data-chg="sector">'+ss+'</select></label>')+
+  '<div class="row"><button type="button" class="btn" data-act="login">Entrar (simulação)</button></div></div>';
+}
+function mgrBar(){
+  var vu=visibleUnits();
+  var sel=vu.length>1?'<label class="field">Unidade<select id="unitsel2" data-chg="unit2">'+vu.map(function(u){return '<option value="'+u.id+'"'+(state.unit===u.id?' selected':'')+'>'+u.id+' | '+u.type+'</option>';}).join('')+'</select></label>':'';
+  return '<div class="card row" style="align-items:flex-end;justify-content:space-between"><div><span class="pill ok">Sessão simulada</span> <span class="small muted">Perfil: '+(state.role==='unidade'?'gestor de unidade':'coordenação setorial de '+secOf(state.sector).nome)+'</span></div><div class="row" style="align-items:flex-end">'+sel+'<button type="button" class="btn ghost" data-act="logout">Sair</button></div></div>';
+}
+function ensureUnit(){var vu=visibleUnits();if(!vu.some(function(u){return u.id===state.unit;}))state.unit=vu[0].id;}
+function vResumo(){
+  ensureUnit();
+  var u=UBY[state.unit],rs=sub(function(r){return r.u===u.id;}),sec=sub(function(r){return r.sector===u.sector;});
+  var sigs=SIGNALS.filter(function(s){return s.unit===u.id;});
+  var done=sigs.filter(function(s){return wf(s.key).resultado;}).length;
+  var rows=DIMS.map(function(d){return ivRow({label:d.nome,sub:d.lente,a:agg(rs,d.id,'fav'),thr:true,ref:agg(sec,d.id,'fav').p});}).join('');
+  var actRows=ACTS.map(function(ac){
+    var r2=rs.filter(function(r){return r.act===ac.id;});
+    return '<tr><td>'+ac.nome+'</td><td class="mono">'+r2.length+'</td>'+DIMS.map(function(d){return r2.length>=MGR_MIN_ACT?'<td class="mono">'+pc(agg(r2,d.id,'fav').p)+'</td>':'<td class="muted small">suprimido</td>';}).join('')+'</tr>';
+  }).join('');
+  var cons=CONS.map(function(c){return ivRow({label:c.nome,a:agg(rs,c.id,'cons'),cons:true});}).join('');
+  var sg=sigs.length?sigs.map(function(s){return '<span class="pill '+(s.band==='agora'?'crit':s.band==='ciclo'?'warn':'mute')+'">'+dimOf(s.dim).nome+': '+BANDS[s.band]+'</span>';}).join(' '):'<span class="muted">Nenhum sinal nesta rodada.</span>';
+  return '<div class="stack">'+mgrBar()+
+  '<div class="stack" style="gap:6px"><h2>Unidade '+u.id+'</h2><p class="muted">'+u.type+' | '+secOf(u.sector).nome+' | Território T'+u.terr+'</p></div>'+
+  '<div class="grid"><div class="card kpi"><b>'+u.n+'</b><span>respostas de '+u.invited+' convidados ('+Math.round(u.n/u.invited*100)+'%)</span></div><div class="card kpi"><b>'+sigs.length+'</b><span>sinais para verificação</span></div><div class="card kpi"><b>'+done+'</b><span>verificações com resultado registrado</span></div></div>'+
+  '<div class="card"><h3>Sinais ativos</h3><p style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+sg+'</p><p class="small muted" style="margin-top:8px"><a href="#gestor-fila">Ir para a fila de verificação</a></p></div>'+
+  '<div class="card"><div class="sec-h"><h3>Perfil por dimensão</h3></div>'+rows+axis()+'<div class="legend" style="margin-top:8px"><span style="border-left:2px dashed var(--warn);padding-left:6px">limiar provisório de atenção ('+Math.round(THR*100)+'%)</span><span><i style="display:inline-block;width:3px;height:12px;background:var(--muted);opacity:.7;vertical-align:middle"></i> referência do setor, não é meta</span></div>'+legendIv(' O limiar é provisório e será calibrado no cotejo técnico (Fase 5).')+'</div>'+
+  '<div class="card"><h3>Por atividade</h3><p class="small muted" style="margin:4px 0 8px">Percentual favorável. Células com menos de '+MGR_MIN_ACT+' respostas ficam suprimidas para proteger quem respondeu.</p><div class="tw"><table><thead><tr><th>Atividade</th><th>n</th>'+DIMS.map(function(d){return '<th>'+d.nome.split(' ')[0]+'</th>';}).join('')+'</tr></thead><tbody>'+actRows+'</tbody></table></div></div>'+
+  '<div class="card"><h3>Consequências declaradas</h3>'+cons+axis()+'</div></div>';
+}
+function vFila(){
+  ensureUnit();
+  var vu=visibleUnits().map(function(u){return u.id;});
+  var sigs=SIGNALS.filter(function(s){return vu.indexOf(s.unit)>=0;});
+  var all=sigs.map(function(s){return wf(s.key);}),ver=all.filter(function(w){return w.resultado;});
+  var conf=ver.filter(function(w){return w.resultado!=='Não confirmada';}).length;
+  var missed=state.missed.filter(function(m){return vu.indexOf(m.unit)>=0;});
+  var rows=sigs.map(function(s){
+    var w=wf(s.key),can=ESTADOS.indexOf(w.estado)>=2;
+    return '<tr><td><strong>'+s.unit+'</strong></td><td>'+dimOf(s.dim).nome+'<br><span class="small muted">'+pc(s.a.p)+' (n='+s.a.n+')</span></td><td><span class="pill '+(s.band==='agora'?'crit':s.band==='ciclo'?'warn':'mute')+'">'+BANDS[s.band]+'</span><br><span class="small muted">sinal '+s.tipo+'</span></td>'+
+    '<td><select aria-label="Estado" data-wf="'+s.key+'|estado">'+ESTADOS.map(function(e){return '<option'+(w.estado===e?' selected':'')+'>'+e+'</option>';}).join('')+'</select></td>'+
+    '<td><select aria-label="Resultado da verificação" data-wf="'+s.key+'|resultado"'+(can?'':' disabled')+'><option value="">Sem resultado</option>'+RESULTS.map(function(e){return '<option'+(w.resultado===e?' selected':'')+'>'+e+'</option>';}).join('')+'</select></td>'+
+    '<td><input type="text" aria-label="Nota" placeholder="Nota" value="'+esc(w.nota)+'" data-wf="'+s.key+'|nota"></td></tr>';
+  }).join('');
+  var us=visibleUnits().map(function(u){return '<option>'+u.id+'</option>';}).join('');
+  return '<div class="stack">'+mgrBar()+
+  '<div class="stack" style="gap:8px"><h2>Fila de verificação</h2><p class="lead">Sinais perceptuais ordenados por faixa de ação e por código da unidade. A fila indica onde um especialista deve olhar primeiro. Ela não ordena unidades por desempenho.</p></div>'+
+  '<div class="grid"><div class="card kpi"><b>'+sigs.length+'</b><span>sinais na fila</span></div><div class="card kpi"><b>'+ver.length+'</b><span>verificações com resultado</span></div><div class="card kpi"><b>'+(ver.length?conf+' de '+ver.length:'sem dado')+'</b><span>alertas confirmados ou parcialmente confirmados</span></div><div class="card kpi"><b>'+missed.length+'</b><span>problemas não sinalizados registrados</span></div></div>'+
+  '<p class="small muted">Os contadores alimentam a avaliação de utilidade do alerta (sensibilidade, falsos alertas e ocorrências não sinalizadas). Com poucos casos, servem apenas de acompanhamento interno.</p>'+
+  '<div class="card"><div class="tw"><table><thead><tr><th>Unidade</th><th>Dimensão</th><th>Faixa</th><th>Estado</th><th>Resultado</th><th>Nota</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="muted">Nenhum sinal na fila.</td></tr>')+'</tbody></table></div></div>'+
+  '<div class="card stack"><h3>Registrar problema não sinalizado</h3><p class="small muted">Use quando uma verificação técnica encontrar um problema que o painel não apontou.</p><div class="row" style="align-items:flex-end"><label class="field">Unidade<select id="m-unit">'+us+'</select></label><label class="field">Dimensão<select id="m-dim">'+DIMS.map(function(d){return '<option value="'+d.id+'">'+d.nome+'</option>';}).join('')+'</select></label><label class="field" style="flex:1 1 220px">Descrição<input id="m-txt" type="text" placeholder="O que foi encontrado"></label><button type="button" class="btn" data-act="addmiss">Registrar</button></div>'+
+  (missed.length?'<ul class="list small">'+missed.map(function(m){return '<li><strong>'+m.unit+'</strong> | '+dimOf(m.dim).nome+(m.txt?': '+esc(m.txt):'')+'</li>';}).join('')+'</ul>':'')+'</div></div>';
+}
+function vInterv(){
+  ensureUnit();
+  var vu=visibleUnits().map(function(u){return u.id;});
+  var sigs=SIGNALS.filter(function(s){return vu.indexOf(s.unit)>=0;});
+  var ivs=state.iv.filter(function(i){return vu.indexOf(i.key.split('|')[0])>=0;});
+  var opts=sigs.map(function(s){return '<option value="'+s.key+'">'+s.unit+' | '+dimOf(s.dim).nome+'</option>';}).join('');
+  var rows=ivs.map(function(i){var uid=i.key.split('|')[0],d=dimOf(i.key.split('|')[1]);return '<tr><td><strong>'+uid+'</strong><br><span class="small muted">'+d.nome+'</span></td><td>'+esc(i.acao)+'</td><td>'+esc(i.resp)+'</td><td class="mono">'+esc(i.prazo)+'</td><td><select aria-label="Estado da intervenção" data-iv="'+i.id+'">'+['Planejada','Em execução','Concluída','Reavaliada'].map(function(e){return '<option'+(i.estado===e?' selected':'')+'>'+e+'</option>';}).join('')+'</select></td></tr>';}).join('');
+  return '<div class="stack">'+mgrBar()+
+  '<div class="stack" style="gap:8px"><h2>Intervenções e reavaliação</h2><p class="lead">Registre a ação adotada para cada sinal verificado e programe a reavaliação perceptual. A comparação antes e depois descreve a unidade e não prova efeito da intervenção.</p></div>'+
+  '<div class="card"><div class="tw"><table><thead><tr><th>Sinal</th><th>Ação</th><th>Responsável</th><th>Prazo</th><th>Estado</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="muted">Nenhuma intervenção registrada.</td></tr>')+'</tbody></table></div></div>'+
+  '<div class="card stack"><h3>Nova intervenção</h3><div class="row" style="align-items:flex-end"><label class="field">Sinal<select id="i-key">'+opts+'</select></label><label class="field" style="flex:1 1 240px">Ação<input id="i-acao" type="text" placeholder="Descreva a ação"></label><label class="field">Responsável<input id="i-resp" type="text" placeholder="Setor ou cargo"></label><label class="field">Prazo<input id="i-prazo" type="date"></label><button type="button" class="btn" data-act="addiv">Adicionar</button></div>'+(state.msg?'<p class="small" style="color:var(--crit)">'+esc(state.msg)+'</p>':'')+'</div>'+
+  '<div class="note">Intervenções que envolvam segurança, acessibilidade ou normas obrigatórias seguem os processos formais de contratação e fiscalização. O painel apenas registra o acompanhamento.</div></div>';
+}
+function vRegras(){
+  ensureUnit();
+  return '<div class="stack">'+mgrBar()+
+  '<div class="stack" style="gap:8px"><h2>Regras de prioridade</h2><p class="lead">A fila segue regras explícitas e auditáveis. Não existe índice composto. Cada dimensão é tratada em separado.</p></div>'+
+  '<div class="grid g3"><div class="card stack" style="gap:8px"><h3>Quando há sinal</h3><ul class="list"><li><strong>Forte:</strong> limite superior do intervalo abaixo de '+Math.round(THR*100)+'% de respostas favoráveis.</li><li><strong>Fraco:</strong> estimativa abaixo de '+Math.round(THR*100)+'%, com intervalo que alcança o limiar.</li><li>Mínimo de '+MIN_SIGNAL_N+' respostas na unidade.</li></ul></div>'+
+  '<div class="card stack" style="gap:8px"><h3>Faixas de ação</h3><ul class="list"><li><span class="pill crit">Verificar agora</span> qualquer sinal em acesso e navegabilidade, ou sinal forte com 50% ou mais relatando dificuldade de execução.</li><li><span class="pill warn">Verificar no ciclo</span> demais sinais fortes.</li><li><span class="pill mute">Monitorar</span> sinais fracos. Ampliar coleta antes de agir.</li></ul></div>'+
+  '<div class="card stack" style="gap:8px"><h3>Direitos não compensáveis</h3><p>Acesso, acessibilidade e privacidade de atendimento não se compensam por média de satisfação. Um sinal nessas dimensões entra na fila mesmo que as demais estejam altas.</p></div></div>'+
+  '<div class="card"><h3>Proteção de quem respondeu</h3><ul class="list" style="margin-top:10px"><li>O gestor vê apenas agregados da própria unidade ou do próprio setor.</li><li>Células com menos de '+MGR_MIN_ACT+' respostas são suprimidas.</li><li>Nenhuma resposta individual, cargo ou turno é exibido.</li><li>Participação ou recusa nunca é informada ao gestor.</li><li>Dados de survey, verificações técnicas e registros administrativos permanecem em fluxos separados.</li></ul></div>'+
+  '<div class="card"><h3>O que a fila não decide</h3><p style="margin-top:8px">A fila sugere onde verificar. A confirmação de um problema depende de especialista autorizado e de laudo quando exigido. Um resultado "Não confirmada" é informação útil para calibrar o limiar.</p></div></div>';
+}
+function vGestor(fn){return state.authed?fn():'<div class="stack"><div class="stack" style="gap:8px"><h2>Área restrita do gestor</h2><p class="lead">Acompanhamento de verificações, intervenções e prioridades de melhoria da própria unidade.</p></div>'+gate()+'</div>';}
+
+var VIEWS={visao:vVisao,atlas:vAtlas,mapa:vMapa,indicadores:vIndicadores,dificuldades:vDificuldades,evidencias:vEvidencias,
+ 'gestor-resumo':function(){return vGestor(vResumo);},'gestor-fila':function(){return vGestor(vFila);},'gestor-intervencoes':function(){return vGestor(vInterv);},'gestor-regras':function(){return vGestor(vRegras);}};
+
+function render(){
+  if(!VIEWS[state.view])state.view='visao';
+  nav();$('#main').innerHTML=VIEWS[state.view]();
+}
+function route(){var h=(location.hash||'').slice(1);state.view=VIEWS[h]?h:'visao';render();window.scrollTo(0,0);}
+
+/* ===== Eventos ===== */
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');if(!b)return;var a=b.getAttribute('data-act'),v=b.getAttribute('data-v');
+  if(a==='dim'){state.dim=v;render();}
+  else if(a==='level'){state.level=v;render();}
+  else if(a==='mdom'){state.mapDom=v;render();}
+  else if(a==='mzoom'){state.mapZoom=v;render();}
+  else if(a==='site'){state.site=v;render();}
+  else if(a==='terr'){state.terr=+v;render();}
+  else if(a==='login'){state.authed=true;if(state.role==='setor'){var vu=visibleUnits();state.unit=vu[0].id;}render();}
+  else if(a==='logout'){state.authed=false;render();}
+  else if(a==='addmiss'){var t=$('#m-txt').value.trim();state.missed.push({unit:$('#m-unit').value,dim:$('#m-dim').value,txt:t});save();render();}
+  else if(a==='addiv'){
+    var key=$('#i-key').value,ac=$('#i-acao').value.trim(),rp=$('#i-resp').value.trim(),pz=$('#i-prazo').value;
+    if(!key||!ac||!rp||!pz){state.msg='Preencha sinal, ação, responsável e prazo.';render();return;}
+    state.msg='';state.iv.push({id:Date.now(),key:key,acao:ac,resp:rp,prazo:pz,estado:'Planejada'});
+    var w=wf(key);if(ESTADOS.indexOf(w.estado)<3)w.estado='Intervenção planejada';
+    save();render();
+  }
+});
+document.addEventListener('change',function(e){
+  var t=e.target,c=t.getAttribute('data-chg');
+  if(c==='act'){state.act=t.value;render();}
+  else if(c==='role'){state.role=t.value;if(t.value==='unidade'&&UBY[state.unit]===undefined)state.unit='J-04';render();}
+  else if(c==='unit'){state.unit=t.value;}
+  else if(c==='sector'){state.sector=t.value;}
+  else if(c==='unit2'){state.unit=t.value;render();}
+  var f=t.getAttribute('data-wf');
+  if(f){var p=f.split('|'),key=p[0]+'|'+p[1],fld=p[2],w=wf(key);w[fld]=t.value;if(fld==='estado'&&ESTADOS.indexOf(t.value)<2)w.resultado='';save();render();}
+  var iv=t.getAttribute('data-iv');
+  if(iv){state.iv.forEach(function(i){if(String(i.id)===iv)i.estado=t.value;});save();}
+});
+document.addEventListener('keydown',function(e){
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('g.site')){e.preventDefault();state.site=e.target.getAttribute('data-v');render();var g=document.querySelector('g.site[data-v="'+state.site+'"]');if(g)g.focus();}
+});
+window.addEventListener('hashchange',route);
+route();
+})();
+</script>
+</body>
+</html>
